@@ -3,14 +3,30 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Poling Sepak Bola</title>
+    <title>Poling Sepak Bola 2025</title>
     <style>
         body { font-family: 'Arial', sans-serif; text-align: center; background: #1a1a1a; color: white; padding: 20px; }
         .card { background: #2a2a2a; padding: 30px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); display: inline-block; width: 100%; max-width: 500px; margin-top: 30px; }
         .btn-box { display: flex; justify-content: space-around; margin-top: 25px; }
-        .btn { padding: 15px 20px; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; width: 45%; transition: 0.3s; color: white; }
-        .madrid { background: #00468c; border: 2px solid white; }
-        .barca { background: #a50044; border: 2px solid #edbb00; }
+        
+        /* Gaya Dasar Tombol */
+        .btn { padding: 15px 10px; border: none; border-radius: 12px; cursor: pointer; font-weight: bold; width: 46%; transition: 0.3s; font-size: 14px; }
+        
+        /* Warna Jersey Madrid 2025 (Putih - Orange) */
+        .madrid { 
+            background: #ffffff; 
+            color: #000000; 
+            border: 3px solid #FE5000; 
+        }
+        
+        /* Warna Jersey Barca 2025 (Blaugrana 125th Anniv) */
+        .barca { 
+            background: #a50044; 
+            color: #ffffff; 
+            border: 3px solid #004d98; 
+        }
+
+        .btn:hover { transform: scale(1.05); filter: brightness(1.1); }
         
         /* Gaya List Admin */
         .admin-item { background: #fff; color: #333; padding: 15px; border-radius: 10px; margin-bottom: 15px; text-align: left; border-left: 5px solid #4285F4; }
@@ -22,8 +38,8 @@
 
     <div class="card">
         <div id="pilih-box">
-            <h2>VOTE TIM FAVORITMU!</h2>
-            <p>Siapa tim jagoanmu?</p>
+            <h2 style="letter-spacing: 1px;">EL CLÁSICO VOTE 2025</h2>
+            <p>Dukung tim jagoanmu musim ini!</p>
             <div class="btn-box">
                 <button class="btn madrid" onclick="pilih('Real Madrid')">REAL MADRID</button>
                 <button class="btn barca" onclick="pilih('Barcelona')">BARCELONA</button>
@@ -40,7 +56,6 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
         import { getDatabase, ref, push, onValue } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-database.js";
 
-        // Konfigurasi Firebase Anda
         const firebaseConfig = {
             databaseURL: "https://project-saya-87cc0-default-rtdb.firebaseio.com/"
         };
@@ -62,12 +77,10 @@
                 
                 if (data) {
                     let htmlContent = "";
-                    // Ambil kunci dan balik urutan (terbaru di atas)
                     const keys = Object.keys(data).reverse(); 
                     
                     keys.forEach((key) => {
                         const item = data[key];
-                        // Perbaikan: Pastikan variabel item.lat dll terbaca (Gunakan backtick ` dan simbol ${})
                         htmlContent += `
                             <div class="admin-item">
                                 <p><b>Pilihan:</b> ${item.pilihan || 'Tidak memilih'}</p>
